@@ -1,0 +1,620 @@
+#define Check(x) printf("%d:0x%x\n", __LINE__, (x))
+/* 
+ * CS:APP Data Lab 
+ * 
+ * <Tanvi Bagal tanvib>
+ * 
+ * bits.c - Source file with your solutions to the Lab.
+ *          This is the file you will hand in to your instructor.
+ *
+ * WARNING: Do not include the <stdio.h> header; it confuses the dlc
+ * compiler. You can still use printf for debugging without including
+ * <stdio.h>, although you might get a compiler warning. In general,
+ * it's not good practice to ignore compiler warnings, but in this
+ * case it's OK.  
+ */
+
+#if 0
+/*
+ * Instructions to Students:
+ *
+ * STEP 1: Read the following instructions carefully.
+ */
+
+You will provide your solution to the Data Lab by
+editing the collection of functions in this source file.
+
+INTEGER CODING RULES:
+ 
+  Replace the "return" statement in each function with one
+  or more lines of C code that implements the function. Your code 
+  must conform to the following style:
+ 
+  int Funct(arg1, arg2, ...) {
+      /* brief description of how your implementation works */
+      int var1 = Expr1;
+      ...
+      int varM = ExprM;
+
+      varJ = ExprJ;
+      ...
+      varN = ExprN;
+      return ExprR;
+  }
+
+  Each "Expr" is an expression using ONLY the following:
+  1. Integer constants 0 through 255 (0xFF), inclusive. You are
+      not allowed to use big constants such as 0xffffffff.
+  2. Function arguments and local variables (no global variables).
+  3. Unary integer operations ! ~
+  4. Binary integer operations & ^ | + << >>
+    
+  Some of the problems restrict the set of allowed operators even further.
+  Each "Expr" may consist of multiple operators. You are not restricted to
+  one operator per line.
+
+  You are expressly forbidden to:
+  1. Use any control constructs such as if, do, while, for, switch, etc.
+  2. Define or use any macros.
+  3. Define any additional functions in this file.
+  4. Call any functions.
+  5. Use any other operations, such as &&, ||, -, or ?:
+  6. Use any form of casting.
+  7. Use any data type other than int.  This implies that you
+     cannot use arrays, structs, or unions.
+
+ 
+  You may assume that your machine:
+  1. Uses 2s complement, 32-bit representations of integers.
+  2. Performs right shifts arithmetically.
+  3. Has unpredictable behavior when shifting an integer by more
+     than the word size.
+
+EXAMPLES OF ACCEPTABLE CODING STYLE:
+  /*
+   * pow2plus1 - returns 2^x + 1, where 0 <= x <= 31
+   */
+  int pow2plus1(int x) {
+     /* exploit ability of shifts to compute powers of 2 */
+     return (1 << x) + 1;
+  }
+
+  /*
+   * pow2plus4 - returns 2^x + 4, where 0 <= x <= 31
+   */
+  int pow2plus4(int x) {
+     /* exploit ability of shifts to compute powers of 2 */
+     int result = (1 << x);
+     result += 4;
+     return result;
+  }
+
+FLOATING POINT CODING RULES
+
+For the problems that require you to implent floating-point operations,
+the coding rules are less strict.  You are allowed to use looping and
+conditional control.  You are allowed to use both ints and unsigneds.
+You can use arbitrary integer and unsigned constants.
+
+You are expressly forbidden to:
+  1. Define or use any macros.
+  2. Define any additional functions in this file.
+  3. Call any functions.
+  4. Use any form of casting.
+  5. Use any data type other than int or unsigned.  This means that you
+     cannot use arrays, structs, or unions.
+  6. Use any floating point data types, operations, or constants.
+
+
+NOTES:
+  1. Use the dlc (data lab checker) compiler (described in the handout) to 
+     check the legality of your solutions.
+  2. Each function has a maximum number of operators (! ~ & ^ | + << >>)
+     that you are allowed to use for your implementation of the function. 
+     The max operator count is checked by dlc. Note that '=' is not 
+     counted; you may use as many of these as you want without penalty.
+  3. Use the btest test harness to check your functions for correctness.
+  4. Use the BDD checker to formally verify your functions
+  5. The maximum number of ops for each function is given in the
+     header comment for each function. If there are any inconsistencies 
+     between the maximum ops in the writeup and in this file, consider
+     this file the authoritative source.
+
+/*
+ * STEP 2: Modify the following functions according the coding rules.
+ * 
+ *   IMPORTANT. TO AVOID GRADING SURPRISES:
+ *   1. Use the dlc compiler to check that your solutions conform
+ *      to the coding rules.
+ *   2. Use the BDD checker to formally verify that your solutions produce 
+ *      the correct answers.
+ */
+
+
+#endif
+/* Copyright (C) 1991-2020 Free Software Foundation, Inc.
+   This file is part of the GNU C Library.
+
+   The GNU C Library is free software; you can redistribute it and/or
+   modify it under the terms of the GNU Lesser General Public
+   License as published by the Free Software Foundation; either
+   version 2.1 of the License, or (at your option) any later version.
+
+   The GNU C Library is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Lesser General Public License for more details.
+
+   You should have received a copy of the GNU Lesser General Public
+   License along with the GNU C Library; if not, see
+   <https://www.gnu.org/licenses/>.  */
+/* This header is separate from features.h so that the compiler can
+   include it implicitly at the start of every compilation.  It must
+   not itself include <features.h> or any other header that includes
+   <features.h> because the implicit include comes before any feature
+   test macros that may be defined in a source file before it first
+   explicitly includes a system header.  GCC knows the name of this
+   header in order to preinclude it.  */
+/* glibc's intent is to support the IEC 559 math functionality, real
+   and complex.  If the GCC (4.9 and later) predefined macros
+   specifying compiler intent are available, use them to determine
+   whether the overall intent is to support these features; otherwise,
+   presume an older compiler has intent to support these features and
+   define these macros by default.  */
+/* wchar_t uses Unicode 10.0.0.  Version 10.0 of the Unicode Standard is
+   synchronized with ISO/IEC 10646:2017, fifth edition, plus
+   the following additions from Amendment 1 to the fifth edition:
+   - 56 emoji characters
+   - 285 hentaigana
+   - 3 additional Zanabazar Square characters */
+/* 
+
+ * absVal - absolute value of x
+ *   Example: absVal(-1) = 1.
+ *   You may assume -TMax <= x <= TMax
+ *   Legal ops: ! ~ & ^ | + << >>
+ *   Max ops: 10
+ *   Rating: 4
+ */
+int absVal(int x) {
+  /* The initial shift is to make the signed symbol all of the symbols.
+  Then, I added x because if 0 then the value won't change and if 1 then
+  it will subtract by 1. Then, I xor with the mask that will either completely
+  switch it, or stay at 0 if 0. */
+  int mask = (x >> 31);
+  int ored = x + mask;
+  int tot = ored ^ mask;
+  return tot;
+}
+/* 
+ * addOK - Determine if can compute x+y without overflow
+ *   Example: addOK(0x80000000,0x80000000) = 0,
+ *            addOK(0x80000000,0x70000000) = 1, 
+ *   Legal ops: ! ~ & ^ | + << >>
+ *   Max ops: 20
+ *   Rating: 3
+ */
+int addOK(int x, int y) {
+  /* so, after summing x and y-- the only thing that distinguishes overflow is if both the MSB when xored
+  with x and y respectively, do not return 1. so that means, if I and the xored x and y, and the answer is one.
+  there must have been overflow. To create this isolation, I shifted 31 bits so only the MSB was considered in the
+  notting*/
+  int sum = x + y;
+  int yxor = sum ^ y;
+  int xor = sum ^ x;
+  int anded = yxor & xor;
+  int shift = anded >> 31;
+  return !shift;
+}
+/* 
+ * allEvenBits - return 1 if all even-numbered bits in word set to 1
+ *   Examples allEvenBits(0xFFFFFFFE) = 0, allEvenBits(0x55555555) = 1
+ *   Legal ops: ! ~ & ^ | + << >>
+ *   Max ops: 12
+ *   Rating: 2
+ */
+int allEvenBits(int x) {
+  /* The first shifts are to ensure that x can be |ed by 0101 continous. If that value results in straight
+  zeros, that means that all bits are even. But, if there is one 1, then I not it to make the value 1 
+  and ! it so that it returns zero.*/
+  int y = 0xAA;
+  int shift1 = (y << 8) | 0xAA;
+  int shift2 = (shift1 << 16) | shift1;
+  int res1 = shift2 | x;
+  int res = ~res1;
+  return !res;
+}
+/* 
+ * anyOddBit - return 1 if any odd-numbered bit in word set to 1
+ *   Examples anyOddBit(0x5) = 0, anyOddBit(0x7) = 1
+ *   Legal ops: ! ~ & ^ | + << >>
+ *   Max ops: 12
+ *   Rating: 2
+ */
+int anyOddBit(int x) {
+  /*The first shifts are to ensure that x can be &ed by 0101 continous. Then, if that value is 0, meaning that 
+  there are no oddbits, I not twice to return the value to zero. However, if there is one, the double not 
+  leaves the value being one. */
+  int y = 0xAA;
+  int shift1 = (y << 8) | 0xAA;
+  int shift2 = (shift1 << 16) | shift1;
+  int and = x & shift2;
+  return !!and;
+
+    return 2;
+}
+/* 
+ * bang - Compute !x without using !
+ *   Examples: bang(3) = 0, bang(0) = 1
+ *   Legal ops: ~ & ^ | + << >>
+ *   Max ops: 12
+ *   Rating: 4 
+ */
+
+int bang(int x) {
+  /* I start off by flipping x to change the signs and then adding one to ensure that if it is zero, it stays zero,
+  and the signs are fully flipped. The or is to isolate zero-- if the value is zero it would stay at zero-- if not the
+  first bit changes to one. I then shift by 31, this is to ensure that all of the values become 1 (ie. negative 1) 
+  unless it is zero. Then, +1 so zero = 1 and -1 = 0.
+  */
+  int not = ~x; 
+  int add = not + 1;
+  int or = add | x;
+  int move = or >> 31;
+  int tot = move + 1;
+  return tot;
+}
+/* 
+ * bitOr - x|y using only ~ and & 
+ *   Example: bitOr(6, 5) = 7
+ *   Legal ops: ~ &
+ *   Max ops: 8
+ *   Rating: 1
+ */
+int bitOr(int x, int y) {
+  /* I not-ed both of the variables so that they were the opposite of themselves and then added them.
+  Because this value was flipped, I not-ed them again so that it would be correct.*/
+  int not = ~x & ~y;
+  return ~not;
+}
+/*
+ * bitParity - returns 1 if x contains an odd number of 0's
+ *   Examples: bitParity(5) = 0, bitParity(7) = 1
+ *   Legal ops: ! ~ & ^ | + << >>
+ *   Max ops: 20
+ *   Rating: 4
+ */
+int bitParity(int x) {
+  /* from the hint, I knew that xoring the upper and lower parts of the bit would result in
+  the correct number of zeros. In order to do that, I shifted by 16 (so like top 16 xored with
+  bottom 16... and then I shifted within the saved version of x1 so that the first half of that
+  was ored with the second half etc. until it was the last one. )*/
+  int x1 = (x >> 16) ^ x;
+  int x2 = (x1 >> 8) ^ x1;
+  int x3 = (x2 >> 4) ^ x2;
+  int x4 = (x3 >> 2) ^ x3;
+  int x5 = (x4 >> 1) ^ x4;
+  int and = x5 & 1; //get rid of other extra bits
+  return and;
+}
+/* 
+ * byteSwap - swaps the nth byte and the mth byte
+ *  Examples: byteSwap(0x12345678, 1, 3) = 0x56341278
+ *            byteSwap(0xDEADBEEF, 0, 2) = 0xDEEFBEAD
+ *  You may assume that 0 <= n <= 3, 0 <= m <= 3
+ *  Legal ops: ! ~ & ^ | + << >>
+ *  Max ops: 25
+ *  Rating: 2
+ */
+int byteSwap(int x, int n, int m) {
+  /* shift so that I am in the position to take a bit. Then, shift the value that much. Then, mask
+  so that I am able to retrive just the bit that I am interested in. Then, shift the mask itself.
+  This is where it gets complicated... after the shift, create a new mask that has the spaces that 
+  need to have bytes inserted into them. Then, shift the bytes into OPPOSITE positions so that they can 
+  be swapped and insert them back. */
+  int nshift = n << 3;
+  int mshift = m << 3;
+  int shift1 = x >> nshift;
+  int shift2 = x >> mshift;
+  int mask1 = shift1 & 0xFF;
+  int mask2 = shift2 & 0xFF;
+  int leftshift1 = mask1 << nshift;
+  int leftshift2 = mask2 << mshift;
+  int parent = x & ~leftshift1 & ~leftshift2; //after we shifted it back & it together but opposite
+  int movedback = mask1 << mshift; //move back to switch position
+  int movedback2 = mask2 << nshift; //move back to switch position
+  int res = movedback | movedback2 | parent; 
+  //int res1 = leftshift1 |leftshift2 | parent;
+  return res;
+}
+/* 
+ * copyLSB - set all bits of result to least significant bit of x
+ *   Example: copyLSB(5) = 0xFFFFFFFF, copyLSB(6) = 0x00000000
+ *   Legal ops: ! ~ & ^ | + << >>
+ *   Max ops: 5
+ *   Rating: 2
+ */
+int copyLSB(int x) {
+  /* I shifted left by 31 bits to isolate the LSB and then right again because it is an arthmetic shift
+  and will fill the rest of the bits with the value of the LSB.*/
+  int res1 = (x << 31);
+  int res = (res1 >> 31);
+  return res;
+}
+/* 
+ * fitsBits - return 1 if x can be represented as an 
+ *  n-bit, two's complement integer.
+ *   1 <= n <= 32
+ *   Examples: fitsBits(5,3) = 0, fitsBits(-4,3) = 1
+ *   Legal ops: ! ~ & ^ | + << >>
+ *   Max ops: 15
+ *   Rating: 2
+ */
+int fitsBits(int x, int n) {
+  /* First, I convert the value into a two's complement by inverting it and adding 1. 
+  Then, I add 32 which is essentially subtracting n from 32 in order to get the
+  the the difference between the max value of n, and size of x. Then I shift to extend the correct
+  sign. Then, I xor to check.
+    - check = 0 if x == move, since 0 xor 1 = 1, and 1 xor 1 = 0.
+  Then, I not it, because if it does fit, it would've returned 0 but needs to return 1.  */
+  int op = ~n;
+  int add = 32 + (op + 1);
+  int shift = (x << add); 
+  int move = shift >> add; 
+  int check = x ^ move;
+  return !check;
+}
+/* 
+ * getByte - Extract byte n from word x
+ *   Bytes numbered from 0 (LSB) to 3 (MSB)
+ *   Examples: getByte(0x12345678,1) = 0x56
+ *   Legal ops: ! ~ & ^ | + << >>
+ *   Max ops: 6
+ *   Rating: 2
+ */
+int getByte(int x, int n) {
+  /* need to multiply by 8 so do shift by 3 which is 2^3. Then shift back by 8 so that the number is
+  on the right-most section. then, mask with 0xFF so only initial byte is remaining. */
+  int eight = (n << 3);
+  int shift = x >> eight;
+  int mask = shift & 0xFF;
+  return mask;
+}
+/* howManyBits - return the minimum number of bits required to represent x in
+ *             two's complement
+ *  Examples: howManyBits(12) = 5
+ *            howManyBits(298) = 10
+ *            howManyBits(-5) = 4
+ *            howManyBits(0)  = 1
+ *            howManyBits(-1) = 1
+ *            howManyBits(0x80000000) = 32
+ *  Legal ops: ! ~ & ^ | + << >>
+ *  Max ops: 90
+ *  Rating: 4
+ */
+int howManyBits(int x) {
+  /* each shift works because, once I move over 16 then I am checking to see 
+  if the value has changed by not-ing twice this will either return 0, if no value, 
+  or 1 if there is. Then I shift that value back 4. This is repeat until I get pos5
+  the final position. From there, I add 2 and subtract bias.
+  */
+  int shift = x >> 31;
+  int firstnot = (shift & (~x)); 
+  int opp = firstnot | (~shift & x); //flip x to ~x if x is negative, otherwise, leave x unchanged
+  int bias = !(0 ^ opp); // bias is 0 if (flipped) x != 0, and bias is 1 if (flipped) x == 0. 
+  int pos = (!!(opp >> 16)) << 4; // checks if the real pos < 16 or >= 16.
+  pos = pos | (!!(opp >> (pos + 8))) << 3;
+  pos = pos | (!!(opp >> (pos +4))) << 2;
+  pos = pos | (!!(opp >> (pos +2))) << 1;
+  pos = pos | (!!(opp >> (pos + 1)));
+  return (pos + 2 + (~bias + 1));
+}
+/* 
+ * implication - return x -> y in propositional logic - 0 for false, 1
+ * for true
+ *   Example: implication(1,1) = 1
+ *            implication(1,0) = 0
+ *   Legal ops: ! ~ ^ |
+ *   Max ops: 5
+ *   Rating: 2
+ */
+int implication(int x, int y) {
+  /* in propostional logic, x -> y works as long as they are the same or if y is true. the only exception
+  is that true cannot imply false. Therefore, I checked both cases. ifso checks to see if they are the same, not 
+  works to ensure that if they are the same, the value changes to 1 and vice versa, and the return statement 
+  checks to see if either they are the same or if y is true. */
+    int ifso = x ^ y;
+    int not = !ifso;
+    return not | y;
+}
+/* 
+ * isAsciiDigit - return 1 if 0x30 <= x <= 0x39 (ASCII codes for characters '0' to '9')
+ *   Example: isAsciiDigit(0x35) = 1.
+ *            isAsciiDigit(0x3a) = 0.
+ *            isAsciiDigit(0x05) = 0.
+ *   Legal ops: ! ~ & ^ | + << >>
+ *   Max ops: 15
+ *   Rating: 3
+ */
+int isAsciiDigit(int x) {
+  /* need to check if x - 30 >= 0 and if 0x39-x >= 0-- basically need to avoid negatives */
+int neg = x >> 31; // will return straight ones if negative (negative is bad)
+int boundlow = 0x30; //lower bound
+int boundhigh = 0x39; //upper bound
+int toosmall = (~boundlow + 1) + x; //checks to see if x is less that the lower bound
+int check = toosmall >> 31; //will create straight ones if negtaive and can use to check
+int negx = (~x +1); // instead of adding we need to subtract from upper
+int toohigh = (boundhigh + negx); // same process repeated with upper bound
+int checkagain = toohigh >> 31;
+int res = !(neg | check | checkagain);
+return res;
+
+  return 2;
+}
+/* 
+ * isEqual - return 1 if x == y, and 0 otherwise 
+ *   Examples: isEqual(5,5) = 1, isEqual(4,5) = 0
+ *   Legal ops: ! ~ & ^ | + << >>
+ *   Max ops: 5
+ *   Rating: 2
+ */
+int isEqual(int x, int y) {
+  /* xor returns 0 if same and 1 if not. So after xor, not xor to recieve 1 if the same.*/
+  int xor = x ^ y;
+  return !xor;
+}
+/* 
+ * isNegative - return 1 if x < 0, return 0 otherwise 
+ *   Example: isNegative(-1) = 1.
+ *   Legal ops: ! ~ & ^ | + << >>
+ *   Max ops: 6
+ *   Rating: 2
+ */
+int isNegative(int x) {
+  /* first bit is a sign bit, so shift all the way to the right so that that is the only bit
+  becuase it is an arithmetic shift, it will either be all 1s or 0s. Then, if all 1s, not twice to get
+  back 1. If all zeros, not twice to get zero.*/
+  int res1 = (x >> 31);
+  return !!res1;
+}
+/*
+ * isPower2 - returns 1 if x is a power of 2, and 0 otherwise
+ *   Examples: isPower2(5) = 0, isPower2(8) = 1, isPower2(0) = 0
+ *   Note that no negative number is a power of 2.
+ *   Legal ops: ! ~ & ^ | + << >>
+ *   Max ops: 20
+ *   Rating: 4
+ */
+int isPower2(int x) {
+  /* I consider three different cases. (1) is tot which actually determines given a random
+  number if it is a power of two (2) isneg which considers if the value is negative and (3)
+  which considers if something is zero. Then, I returned a mix of those. */
+  int isneg = (x >> 31);
+  int nonzero = !(x ^ 0);
+  int tot = (x + (~1 + 1)) & x;
+  int res = (!tot & !!!isneg & !nonzero);
+  return res;
+}
+/*
+ * isTmin - returns 1 if x is the minimum, two's complement number,
+ *     and 0 otherwise 
+ *   Legal ops: ! ~ & ^ | +
+ *   Max ops: 10
+ *   Rating: 1
+ */
+int isTmin(int x) {
+  /* adding one to not x, it will become Tmax if really is Tmin.
+  If it wraps around and changes, then when I xor it should make
+  everything zero. Then to deal with the case of x being zero, I
+  added not x. Then, lastly, not-ed to get the correct value. */
+  int op = ~x;
+  int min = op + 1;
+  int makezero = min ^ x;
+  int nonzero = makezero + !x; //check if zero
+  return !nonzero;
+}
+/* 
+ * minusOne - return a value of -1 
+ *   Legal ops: ! ~ & ^ | + << >>
+ *   Max ops: 2
+ *   Rating: 1
+ */
+int minusOne(void) {
+  /* not 1 + 1 is negative 1. */
+  int negative = ~1 +1;
+  return negative;
+}
+/*
+ * multFiveEighths - multiplies by 5/8 rounding toward 0.
+ *   Should exactly duplicate effect of C expression (x*5/8),
+ *   including overflow behavior.
+ *   Examples: multFiveEighths(77) = 48
+ *             multFiveEighths(-22) = -13
+ *             multFiveEighths(1073741824) = 13421728 (overflow)
+ *   Legal ops: ! ~ & ^ | + << >>
+ *   Max ops: 12
+ *   Rating: 3
+ */
+int multFiveEighths(int x) {
+  /* mult5/8 has two steps: multiplying by 5 and dividing by 8. dividing by 8 is the easiest because
+  that is 2^3 so 0100. simiarly, 5 is shifting left by 2 (so 4) and adding x. The one complication is
+  the overflow, so to solve that problem, I added a constant bias we should add to dividends so that 
+  the (dividend + bias)/8 always returns the correct answer which is 7 (0111) */
+  int five = (x << 2) + x;
+  int overflow = 7 & (five >> 31);
+  int add = five + overflow;
+  int eight = (add >> 3);
+  return eight; 
+}
+/* 
+ * rempwr2 - Compute x%(2^n), for 0 <= n <= 30
+ *   Negative arguments should yield negative remainders
+ *   Examples: rempwr2(15,2) = 3, rempwr2(-35,3) = -3
+ *   Legal ops: ! ~ & ^ | + << >>
+ *   Max ops: 20
+ *   Rating: 3
+ */
+int rempwr2(int x, int n) {
+  /* the first operation is to calculate 2^n and then &s that with x. Then check to see if the operations
+  are negative or positive.  */
+  int shift = ~(~0 << n); //2^n
+  int masked = (x & shift);
+  int neg = (!!masked << 31) >> 31; // checks to see if all 1s (neg) or 0 (positive)
+  int factor = (~(1 << n)) + 1; // equal to -2^n
+  int sub = (x >> 31) & neg; // check to see if negative (if negative subtract to make useful)
+  int remainder= sub & factor; //subtracts
+  int discard = masked + remainder;
+  return discard;
+}
+/* 
+ * rotateLeft - Rotate x to the left by n
+ *   Can assume that 0 <= n <= 31
+ *   Examples: rotateLeft(0x87654321,4) = 0x76543218
+ *   Legal ops: ~ & ^ | + << >> !
+ *   Max ops: 25
+ *   Rating: 3 
+ */
+int rotateLeft(int x, int n) {
+  /* when rotating, I shifted left and then added it with the original number shifted right the same
+  (n) amount. The only issue is with the arithmetic properties which I solved by masking with 1 moved
+  to the n position -1 (which would result in 011111 instead of 100000)*/
+  int first = x << n;
+  int not = (~n + 1); 
+  int opp = not + 32;
+  int right = x >> opp;
+  int add = (1 << n) + (~1 + 1);
+  int masked = right & add;
+  int res = first | masked;
+  return res;
+}
+/*
+ * satMul3 - multiplies by 3, saturating to Tmin or Tmax if overflow
+ *  Examples: satMul3(0x10000000) = 0x30000000
+ *            satMul3(0x30000000) = 0x7FFFFFFF (Saturate to TMax)
+ *            satMul3(0x70000000) = 0x7FFFFFFF (Saturate to TMax)
+ *            satMul3(0xD0000000) = 0x80000000 (Saturate to TMin)
+ *            satMul3(0xA0000000) = 0x80000000 (Saturate to TMin)
+ *  Legal ops: ! ~ & ^ | + << >>
+ *  Max ops: 25
+ *  Rating: 3
+ */
+int satMul3(int x) {
+  /* to multiply by three that is shifted by 2 + x. The main issue with this function
+  is calculating overflow. To do that, you have to xor x and twox-- to check the signs--
+  or twox and threex. So, I first created variables that have x, twox and threex that have
+  the values of x to x*3. Then, I calculated the overflow. Then, there are
+  two cases that I considered, if there is overflow and if there isn't. Then, I ored
+  these to return the correct one.*/
+  int flip, ifover;
+  int checkx = (x >> 31); //checks to see what the MSB is.
+  int tmax = 1 << 31;
+  int tmin = ~tmax;
+  int twox = (x + x);
+  int signtwo = twox >> 31;
+  int threex = (x + x + x);
+  int signthree = threex >> 31;
+  int overflow = (checkx ^signtwo) | (signtwo ^ signthree); //calculate overflow!
+  flip = (~overflow) & threex; // returns if there is no overflow
+  ifover = overflow & ((~checkx & tmin) | (checkx & tmax));
+  return flip | ifover;
+}
