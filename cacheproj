@@ -1,0 +1,171 @@
+#include "cachelab.h"
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include "getopt.h"
+#define max 1000
+
+//global variables
+int time, s, l, b, hits, misses, evictions;
+char* file;
+
+typedef struct cacheline {
+    char valid; // is either 0 or 1
+    long long tag;
+    unsigned long int lru;
+} cacheline;
+
+//creates new lines
+cacheline* newline(int valid, int tag, int time) 
+{
+    cacheline* aline = (cacheline*)malloc(sizeof(cacheline));
+    if (aline == NULL) {
+        fprintf(stderr, "newline: allocation error(\n");
+        exit(1);
+    }
+    aline->tag = tag;
+    aline->valid = valid;
+    aline->lru = time;
+    return aline;
+}
+
+// checks to see if the time of access is less and if so makes that the new LRU
+int findlru (cacheline** array, int E, int s) {
+    cacheline templine =  array[s][0];
+    int ex = 0; //index
+    for (int i=1; i<E; i++) {
+        if (templine.lru > array[s][i].lru) {
+            templine.lru = array[s][i].lru; 
+            ex = i;
+        }
+    }
+    return ex;
+}
+
+//finds the set 
+unsigned long long findset(unsigned long long address, long long tag, int b) {
+    unsigned long long shift = address>>b;
+    unsigned long long mask = (pow(2, s)) - 1;
+    unsigned long long set = mask & shift;
+    return set;
+}
+
+//frees cache
+void freed(cacheline** cache, int sets) {
+    int i = 0;
+    while (i<sets) {
+        free(cache[i]);
+        i++;
+    }
+    free(cache);
+}
+
+// results of cache (hits, misses, and evictions)
+cacheline** res(cacheline** array, int s, int E, int b, unsigned long long address) {
+    long long tag = address>>(s+b); //decomposes address and keeps tag
+    int set = findset(address, tag, b);
+    for (int j = 0; j < E; j++) { //what is E doing and s doing
+        if (array[set][j].valid==1 && array[set][j].tag == tag) {
+            array[set][j].lru = time;
+            hits++;
+            return array;
+        }
+    }
+    // no hit -> looks to see if there is space (increments misses)
+    for (int j = 0; j < E; j++) {
+        if (array[set][j].valid==0) {
+            array[set][j].valid = 1;
+            array[set][j].tag = tag;
+            array[set][j].lru = time;
+            misses++;
+            return array;
+        }
+    }
+    // if there is no space then I have to evict to make space
+    int x = findlru(array, E, set);
+    array[set][x].tag = tag;
+    array[set][x].lru = time;
+    misses++;
+    evictions++;
+    return array;
+    freed(array, s);
+}
+
+
+//creates new cache
+cacheline** newcache(int s, int E) {
+    int i, j;
+    int num_sets = pow(2, s);
+    cacheline** cached = (cacheline**)malloc(num_sets*sizeof(cacheline*));
+    if(cached==NULL) {
+        fprintf(stderr, "newcache: allocation error\n");
+        exit(1);
+    }
+    for(int i=0; i<num_sets; i++) {
+        cached[i] = (cacheline*)malloc(E*sizeof(cacheline));
+        if(cached[i]==NULL) {
+            fprintf(stderr, "newcache: allocation error within set\n");
+            exit(1);
+        }
+    }
+    for(i=0; i<num_sets; i++) {
+        for(j=0; j<E; j++) {
+            cached[i][j].tag = 0;
+            cached[i][j].valid = 0;
+            cached[i][j].lru = 0;
+        }
+    }
+    return cached;
+}
+// whole cache is 2D array where row is set number, columns are cache lines
+void setcache(int argc, char** argv) {
+    int opt;
+    while ((opt = getopt(argc, argv, "s:E:b:t:")) != -1) {
+        switch (opt) {
+            case 's': 
+            s = atoi(optarg);
+            break;
+            case 'E': 
+            l = atoi(optarg);
+            break;
+            case 'b': 
+            b = atoi(optarg);
+            break;
+            case 't': 
+            file = optarg;
+            break;
+            default:
+            fprintf(stderr, "setcache: default error");
+        } 
+    }
+    printf("%d\n", s);
+}
+
+
+int main(int argc, char** argv){
+    setcache(argc, argv);
+    char instruct;
+    int size;
+    unsigned long long loc;
+    FILE* trace = fopen(file, "r");
+    char buff[1000];
+    cacheline** cache1 = newcache(s, l);
+    while (fgets(buff, 1000, trace)){
+        sscanf(buff, " %c %llx,%d", &instruct, &loc, &size);
+        printf("instruction is %c, location is %llx, size is %d \n", instruct, loc, size);
+        if ((instruct == 0x4c) || (instruct == 0x53)){
+            time++;
+            res(cache1, s, l, b, loc);
+        }
+        else if(instruct == 0x4D) {
+            time++;
+            cacheline** temp = res(cache1, s, l, b, loc);
+            time++;
+            res(temp, s, l, b, loc);
+        }
+        printf("%c\n", instruct);
+    }
+    fclose(trace);
+    printSummary(hits, misses, evictions);
+}
